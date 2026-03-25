@@ -9,10 +9,11 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: petshop
     ports:
-      - "5429:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - "./raw_data:/raw_data"
+      - "./migrations:/docker-entrypoint-initdb.d"
 
 volumes:
   pgdata:
