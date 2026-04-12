@@ -19,21 +19,21 @@ CREATE TABLE IF NOT EXISTS dim_pet (
 );
 
 CREATE TABLE IF NOT EXISTS dim_customer (
-    customer_id INTEGER PRIMARY KEY,
+    customer_id SERIAL PRIMARY KEY,
     first_name VARCHAR(255),
     last_name VARCHAR(255),
     age INTEGER,
-    email VARCHAR(255),
+    email VARCHAR(255) UNIQUE NOT NULL,
     location_id INTEGER REFERENCES dim_location(location_id),
     pet_id INTEGER REFERENCES dim_pet(pet_id),
     pet_name VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS dim_seller (
-    seller_id INTEGER PRIMARY KEY,
+    seller_id SERIAL PRIMARY KEY,
     first_name VARCHAR(255),
     last_name VARCHAR(255),
-    email VARCHAR(255),
+    email VARCHAR(255) UNIQUE NOT NULL,
     location_id INTEGER REFERENCES dim_location(location_id)
 );
 
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS dim_supplier (
 );
 
 CREATE TABLE IF NOT EXISTS dim_product (
-    product_id INTEGER PRIMARY KEY,
+    product_id SERIAL PRIMARY KEY,
     product_name VARCHAR(255),
     category_id INTEGER REFERENCES dim_category(category_id),
     supplier_id INTEGER REFERENCES dim_supplier(supplier_id),

@@ -24,9 +24,8 @@ FROM mock_data
 WHERE customer_pet_type IS NOT NULL;
 
 
-INSERT INTO dim_customer (customer_id, first_name, last_name, age, email, location_id, pet_id, pet_name)
-SELECT DISTINCT ON (m.sale_customer_id)
-    m.sale_customer_id,
+INSERT INTO dim_customer (first_name, last_name, age, email, location_id, pet_id, pet_name)
+SELECT DISTINCT ON (m.customer_email)
     m.customer_first_name,
     m.customer_last_name,
     m.customer_age,
@@ -36,19 +35,19 @@ SELECT DISTINCT ON (m.sale_customer_id)
     m.customer_pet_name
 FROM mock_data m
 LEFT JOIN dim_location l
-       ON m.customer_country   = l.country
+       ON m.customer_country    = l.country
       AND m.customer_postal_code = l.postal_code
       AND l.city IS NULL
 LEFT JOIN dim_pet p
        ON m.customer_pet_type  = p.pet_type
       AND m.pet_category       = p.pet_category
       AND m.customer_pet_breed = p.pet_breed
-WHERE m.sale_customer_id IS NOT NULL;
+WHERE m.customer_email IS NOT NULL
+ORDER BY m.customer_email;
 
 
-INSERT INTO dim_seller (seller_id, first_name, last_name, email, location_id)
-SELECT DISTINCT ON (m.sale_seller_id)
-    m.sale_seller_id,
+INSERT INTO dim_seller (first_name, last_name, email, location_id)
+SELECT DISTINCT ON (m.seller_email)
     m.seller_first_name,
     m.seller_last_name,
     m.seller_email,
@@ -58,7 +57,8 @@ LEFT JOIN dim_location l
        ON m.seller_country     = l.country
       AND m.seller_postal_code = l.postal_code
       AND l.city IS NULL
-WHERE m.sale_seller_id IS NOT NULL;
+WHERE m.seller_email IS NOT NULL
+ORDER BY m.seller_email;
 
 
 INSERT INTO dim_store (store_name, location_address, location_id, phone, email)
@@ -95,7 +95,6 @@ WHERE m.supplier_name IS NOT NULL;
 
 
 INSERT INTO dim_product (
-    product_id,
     product_name,
     category_id,
     supplier_id,
@@ -111,8 +110,7 @@ INSERT INTO dim_product (
     release_date,
     expiry_date
 )
-SELECT DISTINCT ON (m.sale_product_id)
-    m.sale_product_id,
+SELECT DISTINCT ON (m.product_name, m.product_brand, m.product_color, m.product_size, m.product_material)
     m.product_name,
     c.category_id,
     s.supplier_id,
@@ -133,19 +131,30 @@ LEFT JOIN dim_category c
 LEFT JOIN dim_supplier s
        ON m.supplier_name  = s.supplier_name
       AND m.supplier_email = s.email
-WHERE m.sale_product_id IS NOT NULL;
+WHERE m.product_name IS NOT NULL
+ORDER BY m.product_name, m.product_brand, m.product_color, m.product_size, m.product_material;
 
 
 INSERT INTO fact_sales (sale_date, customer_id, seller_id, product_id, store_id, quantity, total_price)
 SELECT
     TO_DATE(NULLIF(m.sale_date, ''), 'MM/DD/YYYY'),
-    m.sale_customer_id,
-    m.sale_seller_id,
-    m.sale_product_id,
+    c.customer_id,
+    sl.seller_id,
+    p.product_id,
     st.store_id,
     m.sale_quantity,
     m.sale_total_price
 FROM mock_data m
+LEFT JOIN dim_customer c
+       ON m.customer_email = c.email
+LEFT JOIN dim_seller sl
+       ON m.seller_email = sl.email
+LEFT JOIN dim_product p
+       ON m.product_name     = p.product_name
+      AND m.product_brand    = p.brand
+      AND m.product_color    = p.color
+      AND m.product_size     = p.size
+      AND m.product_material = p.material
 LEFT JOIN dim_store st
        ON m.store_name  = st.store_name
       AND m.store_email = st.email;
